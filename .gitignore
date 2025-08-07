@@ -1,0 +1,9 @@
+# Ignore semua node_modules di seluruh folder
+**/node_modules/
+
+# Ignore semua .env file
+**/.env
+
+# Ignore file log & uploads
+**/uploads/
+*.log
