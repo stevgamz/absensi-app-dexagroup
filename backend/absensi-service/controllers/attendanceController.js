@@ -4,9 +4,9 @@ class AttendanceController {
   static async checkIn(req, res) {
     try {
       const { employee_id } = req.employee;
-      const { notes } = req.body;
+      const { notes, photo, location } = req.body;
 
-      await Attendance.checkIn(employee_id, notes || '');
+      await Attendance.checkIn(employee_id, notes || '', photo || '', location || '');
 
       res.json({
         success: true,
@@ -37,9 +37,9 @@ class AttendanceController {
   static async checkOut(req, res) {
     try {
       const { employee_id } = req.employee;
-      const { notes } = req.body;
+      const { notes, photo, location } = req.body;
 
-      await Attendance.checkOut(employee_id, notes || '');
+      await Attendance.checkOut(employee_id, notes || '', photo || '', location || '');
 
       res.json({
         success: true,
@@ -123,6 +123,30 @@ class AttendanceController {
       });
     } catch (error) {
       console.error('Get Today Attendance Error:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Terjadi kesalahan server'
+      });
+    }
+  }
+
+  static async getAllAttendance(req, res) {
+    try {
+      const { start_date, end_date, limit } = req.query;
+      
+      const attendance = await Attendance.getAllAttendance(
+        start_date, 
+        end_date, 
+        parseInt(limit) || 100
+      );
+
+      res.json({
+        success: true,
+        message: 'Data absensi berhasil diambil',
+        data: attendance
+      });
+    } catch (error) {
+      console.error('Get All Attendance Error:', error);
       res.status(500).json({
         success: false,
         message: 'Terjadi kesalahan server'

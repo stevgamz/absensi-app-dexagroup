@@ -64,7 +64,10 @@ function App() {
       >
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard user={user} />} />
-        <Route path="employees" element={<Employees />} />
+        {/* Only show employees route for admin */}
+        {user?.role === 'admin' && (
+          <Route path="employees" element={<Employees />} />
+        )}
       </Route>
 
       <Route path="*" element={<Navigate to="/dashboard" replace />} />

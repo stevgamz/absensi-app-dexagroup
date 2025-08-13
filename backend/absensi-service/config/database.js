@@ -1,4 +1,6 @@
 const mysql = require('mysql2/promise');
+const fs = require('fs');
+const path = require('path');
 
 const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
@@ -12,16 +14,16 @@ const dbConfig = {
 
 const pool = mysql.createPool(dbConfig);
 
+const uploadsDir = path.join(__dirname, '../uploads/photos');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+// Initialize database tables
 async function initDatabase() {
   try {
-    const connection = await mysql.createConnection({
-      host: process.env.DB_HOST || 'localhost',
-      user: process.env.DB_USER || 'root',
-      password: process.env.DB_PASSWORD || ''
-    });
-
-    await connection.query(`CREATE DATABASE IF NOT EXISTS absensi_db`);
-    await connection.end();
+    await pool.query(`CREATE DATABASE IF NOT EXISTS \`${dbConfig.database}\``);
+    await pool.query(`USE \`${dbConfig.database}\``);
 
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS employees (
@@ -30,15 +32,17 @@ async function initDatabase() {
         name VARCHAR(100) NOT NULL,
         username VARCHAR(50) UNIQUE NOT NULL,
         password VARCHAR(255) NOT NULL,
+        role ENUM('admin', 'employee') DEFAULT 'employee',
         position VARCHAR(100) NOT NULL,
         department VARCHAR(100) NOT NULL,
         email VARCHAR(100),
         phone VARCHAR(20),
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        is_active BOOLEAN DEFAULT TRUE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
       )
     `);
 
-    // Create attendance table
     await pool.execute(`
       CREATE TABLE IF NOT EXISTS attendance (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -48,7 +52,11 @@ async function initDatabase() {
         date DATE NOT NULL,
         status ENUM('hadir', 'terlambat', 'alpha') DEFAULT 'hadir',
         notes TEXT,
+        check_in_photo VARCHAR(255),
+        check_out_photo VARCHAR(255),
+        location VARCHAR(255),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (employee_id) REFERENCES employees(employee_id) ON DELETE CASCADE
       )
     `);
@@ -62,40 +70,44 @@ async function initDatabase() {
     if (existingEmployees[0].count === 0) {
       const employees = [
         {
-          employee_id: 'EMP001',
+          employee_id: 'ADM001',
           name: 'Administrator',
           username: 'admin',
-          password: await bcrypt.hash('password123', 10),
+          password: await bcrypt.hash('admin123', 10),
+          role: 'admin',
           position: 'System Administrator',
           department: 'IT',
           email: 'admin@dexagroup.com',
           phone: '08123456789'
         },
         {
-          employee_id: 'EMP002',
+          employee_id: 'EMP001',
           name: 'John Doe',
           username: 'john.doe',
           password: await bcrypt.hash('password123', 10),
+          role: 'employee',
           position: 'Software Developer',
           department: 'IT',
           email: 'john@dexagroup.com',
           phone: '08123456788'
         },
         {
-          employee_id: 'EMP003',
+          employee_id: 'EMP002',
           name: 'Jane Smith',
           username: 'jane.smith',
           password: await bcrypt.hash('password123', 10),
+          role: 'employee',
           position: 'UI/UX Designer',
           department: 'Design',
           email: 'jane@dexagroup.com',
           phone: '08123456787'
         },
         {
-          employee_id: 'EMP004',
+          employee_id: 'EMP003',
           name: 'Michael Johnson',
           username: 'michael.j',
           password: await bcrypt.hash('password123', 10),
+          role: 'employee',
           position: 'Project Manager',
           department: 'Management',
           email: 'michael@dexagroup.com',
@@ -105,9 +117,9 @@ async function initDatabase() {
 
       for (const emp of employees) {
         await pool.execute(`
-          INSERT INTO employees (employee_id, name, username, password, position, department, email, phone) 
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `, [emp.employee_id, emp.name, emp.username, emp.password, emp.position, emp.department, emp.email, emp.phone]);
+          INSERT INTO employees (employee_id, name, username, password, role, position, department, email, phone) 
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `, [emp.employee_id, emp.name, emp.username, emp.password, emp.role, emp.position, emp.department, emp.email, emp.phone]);
       }
 
       console.log('✅ Dummy data berhasil ditambahkan');
@@ -119,6 +131,7 @@ async function initDatabase() {
   }
 }
 
+// Initialize on startup
 initDatabase();
 
 module.exports = pool;

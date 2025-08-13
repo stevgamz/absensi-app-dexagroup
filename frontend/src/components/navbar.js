@@ -6,7 +6,8 @@ import {
   LogOut, 
   Menu, 
   X,
-  Clock
+  Clock,
+  Shield
 } from 'lucide-react';
 
 const Navbar = ({ user, onLogout }) => {
@@ -14,9 +15,13 @@ const Navbar = ({ user, onLogout }) => {
   const location = useLocation();
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
-    { name: 'Karyawan', href: '/employees', icon: Users },
+    { name: 'Dashboard', href: '/dashboard', icon: Home, forRole: ['admin', 'employee'] },
+    { name: 'Karyawan', href: '/employees', icon: Users, forRole: ['admin'] },
   ];
+
+  const filteredNavigation = navigation.filter(item => 
+    item.forRole.includes(user?.role)
+  );
 
   const isActive = (path) => location.pathname === path;
 
@@ -39,7 +44,7 @@ const Navbar = ({ user, onLogout }) => {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex md:items-center md:space-x-8">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
@@ -61,7 +66,12 @@ const Navbar = ({ user, onLogout }) => {
           {/* User Menu */}
           <div className="hidden md:flex md:items-center md:space-x-4">
             <div className="text-sm text-gray-700">
-              <span className="font-medium">{user?.name}</span>
+              <div className="flex items-center">
+                <span className="font-medium">{user?.name}</span>
+                {user?.role === 'admin' && (
+                  <Shield className="h-3 w-3 text-blue-600 ml-1" title="Admin" />
+                )}
+              </div>
               <span className="block text-xs text-gray-500">{user?.position}</span>
             </div>
             <button
@@ -93,7 +103,7 @@ const Navbar = ({ user, onLogout }) => {
       {isOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50 border-t">
-            {navigation.map((item) => {
+            {filteredNavigation.map((item) => {
               const Icon = item.icon;
               return (
                 <Link
@@ -115,7 +125,12 @@ const Navbar = ({ user, onLogout }) => {
             {/* Mobile User Info */}
             <div className="px-3 py-2 border-t border-gray-200 mt-4">
               <div className="text-sm text-gray-700 mb-3">
-                <span className="font-medium block">{user?.name}</span>
+                <div className="flex items-center">
+                  <span className="font-medium block">{user?.name}</span>
+                  {user?.role === 'admin' && (
+                    <Shield className="h-3 w-3 text-blue-600 ml-1" />
+                  )}
+                </div>
                 <span className="text-xs text-gray-500">{user?.position}</span>
               </div>
               <button

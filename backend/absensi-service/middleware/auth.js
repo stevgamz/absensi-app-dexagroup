@@ -34,4 +34,15 @@ const authenticateToken = async (req, res, next) => {
   }
 };
 
-module.exports = authenticateToken;
+// Middleware untuk admin only
+const requireAdmin = async (req, res, next) => {
+  if (req.employee.role !== 'admin') {
+    return res.status(403).json({
+      success: false,
+      message: 'Akses ditolak. Hanya admin yang bisa mengakses.'
+    });
+  }
+  next();
+};
+
+module.exports = { authenticateToken, requireAdmin };

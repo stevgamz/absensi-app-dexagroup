@@ -30,11 +30,12 @@ class AuthController {
         });
       }
 
-      // Generate JWT token
       const token = jwt.sign(
         { 
           employee_id: employee.employee_id,
-          username: employee.username 
+          username: employee.username,
+          name: employee.name,
+          role: employee.role
         },
         process.env.JWT_SECRET,
         { expiresIn: '24h' }
@@ -44,11 +45,12 @@ class AuthController {
         success: true,
         message: 'Login berhasil',
         data: {
-          token: token,
+          token,
           employee: {
             employee_id: employee.employee_id,
             name: employee.name,
             username: employee.username,
+            role: employee.role,
             position: employee.position,
             department: employee.department,
             email: employee.email
@@ -66,17 +68,10 @@ class AuthController {
 
   static async profile(req, res) {
     try {
-      if (!req.session.employee) {
-        return res.status(401).json({
-          success: false,
-          message: 'Belum login'
-        });
-      }
-
       res.json({
         success: true,
         data: {
-          employee: req.session.employee
+          employee: req.employee
         }
       });
     } catch (error) {
@@ -86,22 +81,6 @@ class AuthController {
         message: 'Terjadi kesalahan server'
       });
     }
-  }
-
-  static async logout(req, res) {
-    req.session.destroy(err => {
-      if (err) {
-        return res.status(500).json({
-          success: false,
-          message: 'Gagal logout'
-        });
-      }
-      res.clearCookie('connect.sid');
-      res.json({
-        success: true,
-        message: 'Logout berhasil'
-      });
-    });
   }
 }
 

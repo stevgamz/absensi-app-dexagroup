@@ -61,18 +61,33 @@ export const employeeAPI = {
   getById: async (id) => {
     const response = await api.get(`/employees/${id}`);
     return response.data;
+  },
+
+  create: async (employeeData) => {
+    const response = await api.post('/employees', employeeData);
+    return response.data;
+  },
+
+  update: async (id, employeeData) => {
+    const response = await api.put(`/employees/${id}`, employeeData);
+    return response.data;
+  },
+
+  delete: async (id) => {
+    const response = await api.delete(`/employees/${id}`);
+    return response.data;
   }
 };
 
 // Attendance API
 export const attendanceAPI = {
-  checkIn: async (notes = '') => {
-    const response = await api.post('/attendance/checkin', { notes });
+  checkIn: async (notes = '', photo = '', location = '') => {
+    const response = await api.post('/attendance/checkin', { notes, photo, location });
     return response.data;
   },
 
-  checkOut: async (notes = '') => {
-    const response = await api.post('/attendance/checkout', { notes });
+  checkOut: async (notes = '', photo = '', location = '') => {
+    const response = await api.post('/attendance/checkout', { notes, photo, location });
     return response.data;
   },
 
@@ -89,6 +104,76 @@ export const attendanceAPI = {
   getTodayAttendance: async () => {
     const response = await api.get('/attendance/today-all');
     return response.data;
+  },
+
+  getAllAttendance: async (startDate, endDate, limit = 100) => {
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    params.append('limit', limit);
+    
+    const response = await api.get(`/attendance/all?${params}`);
+    return response.data;
+  }
+};
+
+// Utility functions for photo handling
+export const photoUtils = {
+  // Convert file to base64
+  fileToBase64: (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  },
+
+  // Resize image before upload
+  resizeImage: (file, maxWidth = 800, quality = 0.8) => {
+    return new Promise((resolve) => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const img = new Image();
+      
+      img.onload = () => {
+        const ratio = Math.min(maxWidth / img.width, maxWidth / img.height);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        canvas.toBlob(resolve, 'image/jpeg', quality);
+      };
+      
+      img.src = URL.createObjectURL(file);
+    });
+  },
+
+  // Get user location
+  getCurrentLocation: () => {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject(new Error('Geolocation tidak didukung'));
+        return;
+      }
+      
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          resolve({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+        },
+        (error) => {
+          reject(error);
+        },
+        {
+          enableHighAccuracy: true,
+          timeout: 10000,
+          maximumAge: 60000
+        }
+      );
+    });
   }
 };
 

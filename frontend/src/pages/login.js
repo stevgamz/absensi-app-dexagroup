@@ -16,7 +16,6 @@ const Login = ({ onLogin }) => {
       ...formData,
       [e.target.name]: e.target.value
     })
-    // Clear error when user starts typing
     if (error) setError('')
   }
 
@@ -146,9 +145,9 @@ const Login = ({ onLogin }) => {
           {/* Demo Credentials */}
           <div className="mt-6 pt-6 border-t border-gray-200">
             <div className="text-xs text-gray-500">
-              <p className="font-medium mb-2">Demo Login:</p>
+              <p className="font-medium mb-2">Admin Login:</p>
               <p>Username: <span className="font-mono bg-gray-100 px-1 py-0.5 rounded">admin</span></p>
-              <p>Password: <span className="font-mono bg-gray-100 px-1 py-0.5 rounded">password123</span></p>
+              <p>Password: <span className="font-mono bg-gray-100 px-1 py-0.5 rounded">admin123</span></p>
             </div>
           </div>
         </div>
